@@ -6,6 +6,7 @@ import {
   CalendarClock,
   CreditCard,
   Home,
+  PanelLeft,
   PieChart,
   Settings,
   Users
@@ -18,13 +19,16 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarTrigger
+  SidebarTrigger,
+  useSidebar
 } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 const Sidebar = () => {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const { state, toggleSidebar } = useSidebar();
 
   const links = [
     { name: 'Dashboard', href: '/', icon: Home },
@@ -37,68 +41,82 @@ const Sidebar = () => {
   ];
 
   return (
-    <SidebarComponent>
-      <SidebarHeader>
-        <div className="flex items-center gap-2 px-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary">
-            <svg 
-              width="24" 
-              height="24" 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              xmlns="http://www.w3.org/2000/svg"
-              className="text-white"
-            >
-              <path 
-                d="M12 6V18M6 12H18" 
-                stroke="currentColor" 
-                strokeWidth="2" 
-                strokeLinecap="round" 
-                strokeLinejoin="round"
-              />
-            </svg>
+    <>
+      <SidebarComponent>
+        <SidebarHeader>
+          <div className="flex items-center gap-2 px-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary">
+              <svg 
+                width="24" 
+                height="24" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                xmlns="http://www.w3.org/2000/svg"
+                className="text-white"
+              >
+                <path 
+                  d="M12 6V18M6 12H18" 
+                  stroke="currentColor" 
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            <div>
+              <div className="font-bold text-lg text-white">Spendwise</div>
+              <div className="text-xs text-sidebar-foreground/70">Expense Tracker</div>
+            </div>
           </div>
-          <div>
-            <div className="font-bold text-lg">Spendwise</div>
-            <div className="text-xs text-muted-foreground">Expense Tracker</div>
+          <SidebarTrigger 
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="absolute right-2 top-2" 
+          />
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarMenu>
+            {links.map((link) => (
+              <SidebarMenuItem key={link.href}>
+                <SidebarMenuButton asChild>
+                  <Link 
+                    to={link.href}
+                    className={cn(
+                      "flex items-center gap-2",
+                      location.pathname === link.href ? "font-medium" : ""
+                    )}
+                  >
+                    <link.icon size={20} />
+                    <span>{link.name}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarContent>
+        <SidebarFooter>
+          <div className="p-4">
+            <div className="rounded-lg bg-sidebar-accent p-4">
+              <h4 className="font-medium text-sidebar-foreground">Need Help?</h4>
+              <p className="text-sm text-sidebar-foreground/70">
+                Check our documentation for tips and guides.
+              </p>
+            </div>
           </div>
-        </div>
-        <SidebarTrigger 
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute right-2 top-2" 
-        />
-      </SidebarHeader>
-      <SidebarContent>
-        <SidebarMenu>
-          {links.map((link) => (
-            <SidebarMenuItem key={link.href}>
-              <SidebarMenuButton asChild>
-                <Link 
-                  to={link.href}
-                  className={cn(
-                    "flex items-center gap-2",
-                    location.pathname === link.href ? "font-medium" : ""
-                  )}
-                >
-                  <link.icon size={20} />
-                  <span>{link.name}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
-      </SidebarContent>
-      <SidebarFooter>
-        <div className="p-4">
-          <div className="rounded-lg bg-accent p-4">
-            <h4 className="font-medium">Need Help?</h4>
-            <p className="text-sm text-muted-foreground">
-              Check our documentation for tips and guides.
-            </p>
-          </div>
-        </div>
-      </SidebarFooter>
-    </SidebarComponent>
+        </SidebarFooter>
+      </SidebarComponent>
+
+      {/* Floating button to reopen sidebar when collapsed */}
+      {state === "collapsed" && (
+        <Button 
+          variant="outline" 
+          size="icon"
+          className="fixed top-4 left-4 z-50 bg-primary text-white hover:bg-primary/90"
+          onClick={toggleSidebar}
+        >
+          <PanelLeft size={16} />
+        </Button>
+      )}
+    </>
   );
 };
 

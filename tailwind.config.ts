@@ -64,15 +64,15 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				spendwise: {
-					purple: '#9b87f5',
+					purple: '#9013FE',
 					purpleDark: '#7E69AB',
 					purpleLight: '#E5DEFF',
-					green: '#F2FCE2',
-					yellow: '#FEF7CD',
-					orange: '#FEC6A1',
-					pink: '#FFDEE2',
-					blue: '#D3E4FD',
-					gray: '#F1F0FB',
+					green: '#53D86A',
+					yellow: '#F5A623',
+					orange: '#FF9500',
+					pink: '#FF2D55',
+					blue: '#54C7FC',
+					gray: '#8A898E',
 				}
 			},
 			borderRadius: {
