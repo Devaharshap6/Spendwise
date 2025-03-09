@@ -18,23 +18,23 @@ import { Plus } from "lucide-react";
 import { RecentTransactions } from "@/components/RecentTransactions";
 import { useEffect, useState } from "react";
 
-// Sample data
+// Sample data updated for INR
 const expenseData = [
-  { name: 'Jan', amount: 1200 },
-  { name: 'Feb', amount: 900 },
-  { name: 'Mar', amount: 1500 },
-  { name: 'Apr', amount: 800 },
-  { name: 'May', amount: 1100 },
-  { name: 'Jun', amount: 1300 },
+  { name: 'Jan', amount: 90000 },
+  { name: 'Feb', amount: 67500 },
+  { name: 'Mar', amount: 112500 },
+  { name: 'Apr', amount: 60000 },
+  { name: 'May', amount: 82500 },
+  { name: 'Jun', amount: 97500 },
 ];
 
 const categoryData = [
-  { name: 'Food', value: 400, color: '#FEF7CD' },
-  { name: 'Rent', value: 800, color: '#F2FCE2' },
-  { name: 'Utilities', value: 200, color: '#D3E4FD' },
-  { name: 'Entertainment', value: 150, color: '#FFDEE2' },
-  { name: 'Transportation', value: 250, color: '#FEC6A1' },
-  { name: 'Other', value: 100, color: '#F1F0FB' },
+  { name: 'Food', value: 30000, color: '#FEF7CD' },
+  { name: 'Rent', value: 60000, color: '#F2FCE2' },
+  { name: 'Utilities', value: 15000, color: '#D3E4FD' },
+  { name: 'Entertainment', value: 11250, color: '#FFDEE2' },
+  { name: 'Transportation', value: 18750, color: '#FEC6A1' },
+  { name: 'Other', value: 7500, color: '#F1F0FB' },
 ];
 
 const Dashboard = () => {
@@ -43,9 +43,9 @@ const Dashboard = () => {
 
   useEffect(() => {
     // In a real app, this would fetch from an API
-    // Simulating calculation of totals
-    setTotalExpenses(3900);
-    setRecurringExpenses(1600);
+    // Simulating calculation of totals (converted to INR)
+    setTotalExpenses(292500);
+    setRecurringExpenses(120000);
   }, []);
 
   return (
@@ -73,7 +73,7 @@ const Dashboard = () => {
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalExpenses.toLocaleString()}</div>
+            <div className="text-2xl font-bold">₹{totalExpenses.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
               Current month expenses
             </p>
@@ -87,7 +87,7 @@ const Dashboard = () => {
             <CalendarClock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${recurringExpenses.toLocaleString()}</div>
+            <div className="text-2xl font-bold">₹{recurringExpenses.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
               Monthly subscription costs
             </p>
@@ -133,7 +133,7 @@ const Dashboard = () => {
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip 
-                  formatter={(value) => [`$${value}`, 'Amount']} 
+                  formatter={(value) => [`₹${value}`, 'Amount']} 
                   labelStyle={{ color: 'black' }}
                   contentStyle={{ 
                     backgroundColor: 'white', 
@@ -176,7 +176,7 @@ const Dashboard = () => {
                   ))}
                 </Pie>
                 <Tooltip 
-                  formatter={(value) => [`$${value}`, 'Amount']} 
+                  formatter={(value) => [`₹${value}`, 'Amount']} 
                   labelStyle={{ color: 'black' }}
                   contentStyle={{ 
                     backgroundColor: 'white', 

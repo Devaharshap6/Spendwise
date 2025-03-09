@@ -8,6 +8,10 @@ import AppLayout from "./layout/AppLayout";
 import Dashboard from "./pages/Dashboard";
 import Expenses from "./pages/Expenses";
 import Recurring from "./pages/Recurring";
+import Reports from "./pages/Reports";
+import Categories from "./pages/Categories";
+import Family from "./pages/Family";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +44,38 @@ const App = () => (
             element={
               <AppLayout>
                 <Recurring />
+              </AppLayout>
+            } 
+          />
+          <Route 
+            path="/reports" 
+            element={
+              <AppLayout>
+                <Reports />
+              </AppLayout>
+            } 
+          />
+          <Route 
+            path="/categories" 
+            element={
+              <AppLayout>
+                <Categories />
+              </AppLayout>
+            } 
+          />
+          <Route 
+            path="/family" 
+            element={
+              <AppLayout>
+                <Family />
+              </AppLayout>
+            } 
+          />
+          <Route 
+            path="/settings" 
+            element={
+              <AppLayout>
+                <Settings />
               </AppLayout>
             } 
           />

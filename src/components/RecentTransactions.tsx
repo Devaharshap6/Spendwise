@@ -16,35 +16,35 @@ const transactions = [
     id: "1",
     date: "2023-06-10",
     description: "Grocery Store",
-    amount: 89.99,
+    amount: 7499.99,
     category: "Food"
   },
   {
     id: "2",
     date: "2023-06-08",
     description: "Rent Payment",
-    amount: 1200.00,
+    amount: 90000.00,
     category: "Rent"
   },
   {
     id: "3",
     date: "2023-06-07",
     description: "Internet Bill",
-    amount: 79.99,
+    amount: 5999.99,
     category: "Utilities"
   },
   {
     id: "4",
     date: "2023-06-05",
     description: "Gasoline",
-    amount: 45.75,
+    amount: 3575.75,
     category: "Transportation"
   },
   {
     id: "5",
     date: "2023-06-03",
     description: "Movie Tickets",
-    amount: 24.00,
+    amount: 1800.00,
     category: "Entertainment"
   }
 ];
@@ -96,7 +96,7 @@ export function RecentTransactions() {
               </Badge>
             </TableCell>
             <TableCell className="text-right">
-              ${transaction.amount.toFixed(2)}
+              ₹{transaction.amount.toFixed(2)}
             </TableCell>
           </TableRow>
         ))}
