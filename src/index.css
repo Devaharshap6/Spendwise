@@ -102,26 +102,26 @@
   }
   
   .category-pill-food {
-    @apply bg-spendwise-green text-green-800;
+    @apply bg-spendwise-brightGreen text-white;
   }
   
   .category-pill-utilities {
-    @apply bg-spendwise-yellow text-amber-800;
+    @apply bg-spendwise-brightYellow text-black;
   }
   
   .category-pill-rent {
-    @apply bg-spendwise-green text-green-800;
+    @apply bg-spendwise-brightBlue text-white;
   }
   
   .category-pill-transportation {
-    @apply bg-spendwise-blue text-blue-800;
+    @apply bg-spendwise-brightOrange text-white;
   }
   
   .category-pill-entertainment {
-    @apply bg-spendwise-pink text-pink-800;
+    @apply bg-spendwise-brightPink text-white;
   }
   
   .category-pill-other {
-    @apply bg-spendwise-gray text-gray-800;
+    @apply bg-spendwise-brightPurple text-white;
   }
 }

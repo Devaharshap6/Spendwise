@@ -2,14 +2,14 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 
-// Sample data
+// Sample data with brighter colors
 const categoryData = [
-  { name: 'Food', value: 400, color: '#FEF7CD' },
-  { name: 'Rent', value: 800, color: '#F2FCE2' },
-  { name: 'Utilities', value: 200, color: '#D3E4FD' },
-  { name: 'Entertainment', value: 150, color: '#FFDEE2' },
-  { name: 'Transportation', value: 250, color: '#FEC6A1' },
-  { name: 'Other', value: 100, color: '#F1F0FB' },
+  { name: 'Food', value: 400, color: '#22E066' },
+  { name: 'Rent', value: 800, color: '#00B2FF' },
+  { name: 'Utilities', value: 200, color: '#FFCB10' },
+  { name: 'Entertainment', value: 150, color: '#FF1A8B' },
+  { name: 'Transportation', value: 250, color: '#FF7B00' },
+  { name: 'Other', value: 100, color: '#8B5CF6' },
 ];
 
 const Categories = () => {
