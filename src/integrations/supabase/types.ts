@@ -15,7 +15,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_expense_trends: {
+        Args: {
+          months_back?: number
+        }
+        Returns: {
+          month_name: string
+          month_num: number
+          year_num: number
+          total_amount: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
