@@ -9,7 +9,6 @@ import {
   PanelLeft,
   PieChart,
   Settings,
-  Users,
   Share2
 } from 'lucide-react';
 import { 

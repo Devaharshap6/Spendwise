@@ -1,4 +1,5 @@
 
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   BarChart, 
@@ -6,7 +7,7 @@ import {
   XAxis, 
   YAxis, 
   CartesianGrid, 
-  Tooltip, 
+  Tooltip as RechartsTooltip, 
   ResponsiveContainer,
   PieChart,
   Pie,
@@ -16,7 +17,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { RecentTransactions } from "@/components/RecentTransactions";
-import { useEffect, useState } from "react";
 
 // Sample data updated for INR
 const expenseData = [
@@ -96,7 +96,7 @@ const Dashboard = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Family Members
+              Team Members
             </CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -132,7 +132,7 @@ const Dashboard = () => {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
-                <Tooltip 
+                <RechartsTooltip 
                   formatter={(value) => [`₹${value}`, 'Amount']} 
                   labelStyle={{ color: 'black' }}
                   contentStyle={{ 
@@ -175,7 +175,7 @@ const Dashboard = () => {
                     <Cell key={`cell-${index}`} fill={entry.color} stroke="#fff" />
                   ))}
                 </Pie>
-                <Tooltip 
+                <RechartsTooltip 
                   formatter={(value) => [`₹${value}`, 'Amount']} 
                   labelStyle={{ color: 'black' }}
                   contentStyle={{ 
