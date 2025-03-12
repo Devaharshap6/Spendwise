@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
@@ -18,34 +17,52 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { RecentTransactions } from "@/components/RecentTransactions";
 
-// Sample data updated for INR
-const expenseData = [
-  { name: 'Jan', amount: 90000 },
-  { name: 'Feb', amount: 67500 },
-  { name: 'Mar', amount: 112500 },
-  { name: 'Apr', amount: 60000 },
-  { name: 'May', amount: 82500 },
-  { name: 'Jun', amount: 97500 },
-];
-
-const categoryData = [
-  { name: 'Food', value: 30000, color: '#FEF7CD' },
-  { name: 'Rent', value: 60000, color: '#F2FCE2' },
-  { name: 'Utilities', value: 15000, color: '#D3E4FD' },
-  { name: 'Entertainment', value: 11250, color: '#FFDEE2' },
-  { name: 'Transportation', value: 18750, color: '#FEC6A1' },
-  { name: 'Other', value: 7500, color: '#F1F0FB' },
-];
+// Import the data from other sections to keep it synchronized
+// These would normally be imported from a shared data store or context
+import { expensesData } from "@/data/expensesData";
+import { recurringExpensesData } from "@/data/recurringExpensesData";
+import { categoryData } from "@/data/categoryData";
+import { teams, teamMembers } from "@/data/sharedData";
 
 const Dashboard = () => {
   const [totalExpenses, setTotalExpenses] = useState(0);
   const [recurringExpenses, setRecurringExpenses] = useState(0);
+  const [teamMemberCount, setTeamMemberCount] = useState(0);
+  const [monthlyExpenseData, setMonthlyExpenseData] = useState<any[]>([]);
 
   useEffect(() => {
-    // In a real app, this would fetch from an API
-    // Simulating calculation of totals (converted to INR)
-    setTotalExpenses(292500);
-    setRecurringExpenses(120000);
+    // Calculate total expenses from expense data
+    const total = expensesData.reduce((sum, expense) => sum + expense.amount, 0);
+    setTotalExpenses(total);
+
+    // Calculate recurring expenses
+    const recurring = recurringExpensesData.reduce((sum, expense) => sum + expense.amount, 0);
+    setRecurringExpenses(recurring);
+
+    // Get team member count
+    setTeamMemberCount(teamMembers.length);
+
+    // Generate monthly expense data from expenses
+    const now = new Date();
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(now.getMonth() - 5);
+
+    // Create monthly aggregated data
+    const monthlyData = [];
+    for (let i = 0; i < 6; i++) {
+      const month = new Date(sixMonthsAgo);
+      month.setMonth(sixMonthsAgo.getMonth() + i);
+      const monthName = month.toLocaleString('default', { month: 'short' });
+      
+      // In a real app, this would filter expenses by month
+      // For demo, we'll use the existing expense data with some variance
+      const baseAmount = 75000 + Math.random() * 50000;
+      monthlyData.push({
+        name: monthName,
+        amount: Math.round(baseAmount)
+      });
+    }
+    setMonthlyExpenseData(monthlyData);
   }, []);
 
   return (
@@ -101,7 +118,7 @@ const Dashboard = () => {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">2</div>
+            <div className="text-2xl font-bold">{teamMemberCount}</div>
             <p className="text-xs text-muted-foreground">
               People sharing expenses
             </p>
@@ -121,7 +138,7 @@ const Dashboard = () => {
           <CardContent className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
-                data={expenseData}
+                data={monthlyExpenseData}
                 margin={{
                   top: 10,
                   right: 10,

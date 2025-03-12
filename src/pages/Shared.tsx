@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -6,33 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, UserPlus, Share2, Users } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { teamMembers, teams, sharedExpenses } from "@/data/sharedData";
 
 const Shared = () => {
   const [activeTab, setActiveTab] = useState("teams");
-
-  // Sample team members data
-  const teamMembers = [
-    { id: 1, name: 'John Doe', role: 'Admin', joinedDate: '2023-01-15', avatar: '', type: 'Business Partner' },
-    { id: 2, name: 'Jane Smith', role: 'Member', joinedDate: '2023-01-20', avatar: '', type: 'Team Member' },
-    { id: 3, name: 'Alex Johnson', role: 'Member', joinedDate: '2023-02-05', avatar: '', type: 'Family' },
-    { id: 4, name: 'Maria Garcia', role: 'Member', joinedDate: '2023-03-10', avatar: '', type: 'Business Partner' }
-  ];
-
-  // Sample teams/groups data
-  const teams = [
-    { id: 1, name: 'Marketing Team', members: 4, createdDate: '2023-01-10', type: 'Team' },
-    { id: 2, name: 'Family', members: 3, createdDate: '2023-01-05', type: 'Family' },
-    { id: 3, name: 'Roommates', members: 2, createdDate: '2023-02-15', type: 'Shared Living' },
-    { id: 4, name: 'Startup Co-founders', members: 3, createdDate: '2023-03-20', type: 'Business' }
-  ];
-
-  // Sample shared expenses
-  const sharedExpenses = [
-    { id: 1, description: 'Office Supplies', amount: 156.50, date: '2023-04-12', team: 'Marketing Team', paidBy: 'John Doe', status: 'Settled' },
-    { id: 2, description: 'Team Lunch', amount: 89.75, date: '2023-04-15', team: 'Marketing Team', paidBy: 'Jane Smith', status: 'Pending' },
-    { id: 3, description: 'Monthly Rent', amount: 1200, date: '2023-04-01', team: 'Roommates', paidBy: 'Alex Johnson', status: 'Settled' },
-    { id: 4, description: 'Software Subscription', amount: 49.99, date: '2023-04-05', team: 'Startup Co-founders', paidBy: 'Maria Garcia', status: 'Pending' }
-  ];
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -173,7 +149,7 @@ const Shared = () => {
                     {sharedExpenses.map((expense) => (
                       <tr key={expense.id} className="border-b hover:bg-muted/20">
                         <td className="px-4 py-3">{expense.description}</td>
-                        <td className="px-4 py-3 font-medium">${expense.amount.toFixed(2)}</td>
+                        <td className="px-4 py-3 font-medium">₹{expense.amount.toFixed(2)}</td>
                         <td className="px-4 py-3">{new Date(expense.date).toLocaleDateString()}</td>
                         <td className="px-4 py-3">{expense.team}</td>
                         <td className="px-4 py-3">{expense.paidBy}</td>

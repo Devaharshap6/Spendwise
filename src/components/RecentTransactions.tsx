@@ -9,45 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-
-// Sample data for recent transactions
-const transactions = [
-  {
-    id: "1",
-    date: "2023-06-10",
-    description: "Grocery Store",
-    amount: 7499.99,
-    category: "Food"
-  },
-  {
-    id: "2",
-    date: "2023-06-08",
-    description: "Rent Payment",
-    amount: 90000.00,
-    category: "Rent"
-  },
-  {
-    id: "3",
-    date: "2023-06-07",
-    description: "Internet Bill",
-    amount: 5999.99,
-    category: "Utilities"
-  },
-  {
-    id: "4",
-    date: "2023-06-05",
-    description: "Gasoline",
-    amount: 3575.75,
-    category: "Transportation"
-  },
-  {
-    id: "5",
-    date: "2023-06-03",
-    description: "Movie Tickets",
-    amount: 1800.00,
-    category: "Entertainment"
-  }
-];
+import { expensesData } from "@/data/expensesData";
 
 export function RecentTransactions() {
   // Map category to appropriate styling
@@ -73,6 +35,11 @@ export function RecentTransactions() {
     });
   };
 
+  // Get only the 5 most recent transactions
+  const recentTransactions = [...expensesData]
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 5);
+
   return (
     <Table>
       <TableHeader>
@@ -84,7 +51,7 @@ export function RecentTransactions() {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {transactions.map((transaction) => (
+        {recentTransactions.map((transaction) => (
           <TableRow key={transaction.id}>
             <TableCell className="font-medium">
               {formatDate(transaction.date)}
