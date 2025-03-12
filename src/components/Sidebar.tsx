@@ -9,7 +9,8 @@ import {
   PanelLeft,
   PieChart,
   Settings,
-  Users
+  Users,
+  Share2
 } from 'lucide-react';
 import { 
   Sidebar as SidebarComponent, 
@@ -36,7 +37,7 @@ const Sidebar = () => {
     { name: 'Recurring', href: '/recurring', icon: CalendarClock },
     { name: 'Reports', href: '/reports', icon: BarChart3 },
     { name: 'Categories', href: '/categories', icon: PieChart },
-    { name: 'Family', href: '/family', icon: Users },
+    { name: 'Shared', href: '/shared', icon: Share2 },
     { name: 'Settings', href: '/settings', icon: Settings },
   ];
 
