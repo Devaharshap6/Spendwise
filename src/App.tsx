@@ -10,7 +10,7 @@ import Expenses from "./pages/Expenses";
 import Recurring from "./pages/Recurring";
 import Reports from "./pages/Reports";
 import Categories from "./pages/Categories";
-import Family from "./pages/Family";
+import Shared from "./pages/Shared";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
@@ -64,10 +64,10 @@ const App = () => (
             } 
           />
           <Route 
-            path="/family" 
+            path="/shared" 
             element={
               <AppLayout>
-                <Family />
+                <Shared />
               </AppLayout>
             } 
           />
