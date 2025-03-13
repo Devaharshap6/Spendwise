@@ -23,60 +23,47 @@ const SummaryCards = ({
   const [recurringExpenses, setRecurringExpenses] = useState(initialRecurringExpenses || 0);
   const [teamMemberCount, setTeamMemberCount] = useState(initialTeamMemberCount || 0);
   const [isLoading, setIsLoading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     const fetchSummaryData = async () => {
       try {
         setIsLoading(true);
         
+        // Check if user is authenticated
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        
+        if (userError || !userData.user) {
+          console.log('User not authenticated, using local data');
+          setIsAuthenticated(false);
+          useFallbackData();
+          return;
+        }
+        
+        setIsAuthenticated(true);
+        const userId = userData.user.id;
+        
         // Get current year and month
         const now = new Date();
         const year = now.getFullYear();
         const month = now.getMonth() + 1;
         
-        // Since we can't access the tables in Supabase due to type errors,
-        // use the local data as a fallback
+        // Fetch data from Supabase tables if authenticated
         if (!initialTotalExpenses) {
-          // Filter expense data for current month
-          const currentMonthExpenses = expensesData.filter(expense => {
-            const expenseDate = new Date(expense.date);
-            return expenseDate.getFullYear() === year && expenseDate.getMonth() + 1 === month;
-          });
-          
-          const total = currentMonthExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-          setTotalExpenses(total);
+          await fetchTotalExpenses(userId, year, month);
         }
         
-        // Use local data for recurring expenses
         if (!initialRecurringExpenses) {
-          const activeRecurring = recurringExpensesData.filter(expense => expense.active);
-          const total = activeRecurring.reduce((sum, expense) => sum + expense.amount, 0);
-          setRecurringExpenses(total);
+          await fetchRecurringExpenses(userId);
         }
         
-        // Use local data for team member count
         if (!initialTeamMemberCount) {
-          // Check if the user is authenticated first by making a simple query to Supabase
-          try {
-            // Try to use the expense_trends function to test authentication
-            const { data: expenseTrends, error } = await supabase
-              .rpc('get_expense_trends', { months_back: 6 });
-              
-            if (error && error.message.includes('JWTClaimsSetError')) {
-              console.log('User not authenticated');
-              setTeamMemberCount(0);
-            } else {
-              // Use local data for team members
-              setTeamMemberCount(teamMembers.length);
-            }
-          } catch (e) {
-            console.error('Authentication error:', e);
-            // Fallback to local data
-            setTeamMemberCount(teamMembers.length);
-          }
+          await fetchTeamMemberCount(userId);
         }
       } catch (error) {
         console.error('Error fetching summary data:', error);
+        // Fall back to local data if Supabase queries fail
+        useFallbackData();
       } finally {
         setIsLoading(false);
       }
@@ -87,6 +74,103 @@ const SummaryCards = ({
       fetchSummaryData();
     }
   }, [initialTotalExpenses, initialRecurringExpenses, initialTeamMemberCount]);
+
+  const fetchTotalExpenses = async (userId: string, year: number, month: number) => {
+    try {
+      const startDate = `${year}-${month.toString().padStart(2, '0')}-01`;
+      const endDate = month === 12 
+        ? `${year + 1}-01-01` 
+        : `${year}-${(month + 1).toString().padStart(2, '0')}-01`;
+      
+      const { data: expenses, error } = await supabase
+        .from('expenses')
+        .select('amount')
+        .eq('user_id', userId)
+        .gte('date', startDate)
+        .lt('date', endDate);
+      
+      if (error) throw error;
+      
+      if (expenses && expenses.length > 0) {
+        const total = expenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
+        setTotalExpenses(total);
+      } else {
+        // If no expenses found for current month, set to 0
+        setTotalExpenses(0);
+      }
+    } catch (error) {
+      console.error('Error fetching total expenses:', error);
+      throw error;
+    }
+  };
+
+  const fetchRecurringExpenses = async (userId: string) => {
+    try {
+      const { data: recurring, error } = await supabase
+        .from('recurring_expenses')
+        .select('amount')
+        .eq('user_id', userId)
+        .eq('active', true);
+      
+      if (error) throw error;
+      
+      if (recurring && recurring.length > 0) {
+        const total = recurring.reduce((sum, expense) => sum + Number(expense.amount), 0);
+        setRecurringExpenses(total);
+      } else {
+        // If no recurring expenses found, set to 0
+        setRecurringExpenses(0);
+      }
+    } catch (error) {
+      console.error('Error fetching recurring expenses:', error);
+      throw error;
+    }
+  };
+
+  const fetchTeamMemberCount = async (userId: string) => {
+    try {
+      const { data: members, error } = await supabase
+        .from('team_members')
+        .select('id')
+        .eq('user_id', userId);
+      
+      if (error) throw error;
+      
+      if (members) {
+        setTeamMemberCount(members.length);
+      } else {
+        setTeamMemberCount(0);
+      }
+    } catch (error) {
+      console.error('Error fetching team members:', error);
+      throw error;
+    }
+  };
+
+  const useFallbackData = () => {
+    // Get current year and month for filtering local data
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+    
+    // Filter expense data for current month
+    const currentMonthExpenses = expensesData.filter(expense => {
+      const expenseDate = new Date(expense.date);
+      return expenseDate.getFullYear() === year && expenseDate.getMonth() + 1 === month;
+    });
+    
+    // Calculate total expenses for current month from local data
+    const totalExpensesAmount = currentMonthExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+    setTotalExpenses(totalExpensesAmount);
+    
+    // Calculate recurring expenses from local data
+    const activeRecurring = recurringExpensesData.filter(expense => expense.active);
+    const recurringExpensesAmount = activeRecurring.reduce((sum, expense) => sum + expense.amount, 0);
+    setRecurringExpenses(recurringExpensesAmount);
+    
+    // Set team member count from local data
+    setTeamMemberCount(teamMembers.length);
+  };
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -144,6 +228,7 @@ const SummaryCards = ({
           </div>
           <p className="text-xs text-muted-foreground">
             People sharing expenses
+            {!isAuthenticated && <span className="block text-xs text-muted-foreground">(local data)</span>}
           </p>
         </CardContent>
       </Card>
