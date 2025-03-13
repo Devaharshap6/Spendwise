@@ -1,20 +1,21 @@
 
-import { ReactNode } from 'react';
-import { SidebarProvider } from '@/components/ui/sidebar';
-import Sidebar from '@/components/Sidebar';
+import { cn } from "@/lib/utils";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import Sidebar from "@/components/Sidebar";
 
 interface AppLayoutProps {
-  children: ReactNode;
+  children: React.ReactNode;
+  session?: any;
 }
 
-const AppLayout = ({ children }: AppLayoutProps) => {
+const AppLayout = ({ children, session }: AppLayoutProps) => {
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
-        <Sidebar />
-        <main className="flex-1 overflow-auto p-6">
-          {children}
-        </main>
+      <div className={cn("grid min-h-screen w-full", "lg:grid-cols-[280px_1fr]")}>
+        <Sidebar session={session} />
+        <div className="flex flex-col">
+          <main className="flex-1 p-6">{children}</main>
+        </div>
       </div>
     </SidebarProvider>
   );

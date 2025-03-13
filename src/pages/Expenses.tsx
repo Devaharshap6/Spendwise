@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { 
   Card, 
   CardContent, 
@@ -29,6 +30,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { expensesData } from "@/data/expensesData";
 
 // Available categories
@@ -43,12 +46,46 @@ const categories = [
 
 const Expenses = () => {
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [expenses, setExpenses] = useState(expensesData);
+  const [isFiltering, setIsFiltering] = useState(false);
+  const [filterCategory, setFilterCategory] = useState("");
+  const { toast } = useToast();
+  
   const [newExpense, setNewExpense] = useState({
     description: "",
     amount: "",
     category: "",
     date: new Date().toISOString().split('T')[0],
   });
+
+  useEffect(() => {
+    fetchExpenses();
+  }, []);
+
+  const fetchExpenses = async () => {
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const user = session?.session?.user;
+      
+      if (user) {
+        const { data, error } = await supabase
+          .from('expenses')
+          .select('*')
+          .order('date', { ascending: false });
+        
+        if (error) throw error;
+        if (data && data.length > 0) {
+          setExpenses(data);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching expenses:", error);
+      // Fallback to demo data
+      setExpenses(expensesData);
+    }
+  };
 
   // Map category to appropriate styling
   const getCategoryClass = (category: string) => {
@@ -81,18 +118,129 @@ const Expenses = () => {
     });
   };
 
-  const handleAddExpense = () => {
-    // In a real app, this would add the expense to the database
-    // and then refetch the data
-    console.log("Adding expense:", newExpense);
-    setIsAddExpenseOpen(false);
-    setNewExpense({
-      description: "",
-      amount: "",
-      category: "",
-      date: new Date().toISOString().split('T')[0],
-    });
+  const handleAddExpense = async () => {
+    setIsLoading(true);
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const user = session?.session?.user;
+      
+      if (!newExpense.description || !newExpense.amount || !newExpense.category) {
+        throw new Error("Please fill in all fields");
+      }
+      
+      if (user) {
+        // Try to add to Supabase if user is authenticated
+        const { error } = await supabase
+          .from('expenses')
+          .insert({
+            description: newExpense.description,
+            amount: parseFloat(newExpense.amount),
+            category: newExpense.category,
+            date: newExpense.date,
+            user_id: user.id,
+            added_by: user.email
+          });
+        
+        if (error) throw error;
+        
+        // Refetch expenses
+        await fetchExpenses();
+      } else {
+        // Demo mode - add to local data
+        const newExpenseItem = {
+          id: crypto.randomUUID(),
+          description: newExpense.description,
+          amount: parseFloat(newExpense.amount),
+          category: newExpense.category,
+          date: newExpense.date,
+          added_by: "You (Demo)"
+        };
+        
+        setExpenses([newExpenseItem, ...expenses]);
+      }
+      
+      toast({
+        title: "Expense Added",
+        description: `Added ${newExpense.description} for $${newExpense.amount}`,
+      });
+      
+      setIsAddExpenseOpen(false);
+      setNewExpense({
+        description: "",
+        amount: "",
+        category: "",
+        date: new Date().toISOString().split('T')[0],
+      });
+    } catch (error: any) {
+      console.error("Error adding expense:", error);
+      toast({
+        variant: "destructive",
+        title: "Error adding expense",
+        description: error.message || "There was an error adding your expense. Please try again.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const handleExport = () => {
+    setIsExporting(true);
+    
+    try {
+      // Create CSV content
+      const headers = ["Date", "Description", "Category", "Added By", "Amount"];
+      const csvContent = [
+        headers.join(","),
+        ...expenses.map(expense => [
+          formatDate(expense.date),
+          `"${expense.description}"`,
+          expense.category,
+          expense.added_by || "You",
+          expense.amount
+        ].join(","))
+      ].join("\n");
+      
+      // Create download link
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `expenses_${new Date().toISOString().split("T")[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({
+        title: "Export Complete",
+        description: "Your expenses have been exported to CSV",
+      });
+    } catch (error) {
+      console.error("Error exporting expenses:", error);
+      toast({
+        variant: "destructive",
+        title: "Error exporting",
+        description: "There was an error exporting your expenses. Please try again.",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleFilter = (category: string) => {
+    setFilterCategory(category);
+    setIsFiltering(false);
+    
+    if (category) {
+      toast({
+        title: "Filter Applied",
+        description: `Showing only ${category} expenses`,
+      });
+    }
+  };
+
+  const filteredExpenses = filterCategory 
+    ? expenses.filter(expense => expense.category === filterCategory)
+    : expenses;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -104,11 +252,43 @@ const Expenses = () => {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">
-            <Filter className="h-4 w-4 mr-2" />
-            Filter
-          </Button>
-          <Button variant="outline">
+          <Dialog open={isFiltering} onOpenChange={setIsFiltering}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Filter className="h-4 w-4 mr-2" />
+                {filterCategory ? `Filter: ${filterCategory}` : "Filter"}
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Filter Expenses</DialogTitle>
+                <DialogDescription>
+                  Filter expenses by category
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-2 gap-2">
+                  {categories.map(category => (
+                    <Button 
+                      key={category} 
+                      variant={filterCategory === category ? "default" : "outline"}
+                      onClick={() => handleFilter(category)}
+                    >
+                      {category}
+                    </Button>
+                  ))}
+                  <Button 
+                    variant={!filterCategory ? "default" : "outline"}
+                    onClick={() => handleFilter("")}
+                    className="col-span-2"
+                  >
+                    Clear Filters
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+          <Button variant="outline" onClick={handleExport} isLoading={isExporting}>
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
@@ -184,7 +364,7 @@ const Expenses = () => {
                 </div>
               </div>
               <DialogFooter>
-                <Button type="submit" onClick={handleAddExpense}>
+                <Button type="submit" onClick={handleAddExpense} isLoading={isLoading}>
                   Add Expense
                 </Button>
               </DialogFooter>
@@ -212,7 +392,7 @@ const Expenses = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {expensesData.map((expense) => (
+              {filteredExpenses.map((expense) => (
                 <TableRow key={expense.id}>
                   <TableCell className="font-medium">
                     {formatDate(expense.date)}
@@ -223,12 +403,19 @@ const Expenses = () => {
                       {expense.category}
                     </Badge>
                   </TableCell>
-                  <TableCell>{expense.addedBy}</TableCell>
+                  <TableCell>{expense.added_by || "You"}</TableCell>
                   <TableCell className="text-right">
-                    ${expense.amount.toFixed(2)}
+                    ${typeof expense.amount === 'number' ? expense.amount.toFixed(2) : expense.amount}
                   </TableCell>
                 </TableRow>
               ))}
+              {filteredExpenses.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
+                    {filterCategory ? `No expenses found in category: ${filterCategory}` : "No expenses found"}
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>

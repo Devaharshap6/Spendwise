@@ -1,15 +1,18 @@
 
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   BarChart3,
   CalendarClock,
   CreditCard,
   Home,
+  LogIn,
+  LogOut,
   PanelLeft,
   PieChart,
   Settings,
-  Share2
+  Share2,
+  User
 } from 'lucide-react';
 import { 
   Sidebar as SidebarComponent, 
@@ -24,11 +27,19 @@ import {
 } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
-const Sidebar = () => {
+interface SidebarProps {
+  session?: any;
+}
+
+const Sidebar = ({ session }: SidebarProps) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { state, toggleSidebar } = useSidebar();
+  const { toast } = useToast();
 
   const links = [
     { name: 'Dashboard', href: '/', icon: Home },
@@ -39,6 +50,24 @@ const Sidebar = () => {
     { name: 'Shared', href: '/shared', icon: Share2 },
     { name: 'Settings', href: '/settings', icon: Settings },
   ];
+
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      toast({
+        title: "Logout successful",
+        description: "You've been logged out",
+      });
+      navigate('/auth');
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Logout failed",
+        description: error.message || "There was an error logging out",
+      });
+    }
+  };
 
   return (
     <>
@@ -95,12 +124,40 @@ const Sidebar = () => {
         </SidebarContent>
         <SidebarFooter>
           <div className="p-4">
-            <div className="rounded-lg bg-sidebar-accent p-4">
-              <h4 className="font-medium text-sidebar-foreground">Need Help?</h4>
-              <p className="text-sm text-sidebar-foreground/70">
-                Check our documentation for tips and guides.
-              </p>
-            </div>
+            {session ? (
+              <div className="space-y-4">
+                <div className="rounded-lg bg-sidebar-accent p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <User size={16} className="text-sidebar-foreground/70" />
+                    <span className="text-sm font-medium text-sidebar-foreground">
+                      {session.user.email}
+                    </span>
+                  </div>
+                  <Button 
+                    variant="secondary" 
+                    size="sm" 
+                    className="w-full" 
+                    onClick={handleLogout}
+                  >
+                    <LogOut size={16} className="mr-2" />
+                    Logout
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-lg bg-sidebar-accent p-4">
+                <h4 className="font-medium text-sidebar-foreground mb-2">Not logged in</h4>
+                <Button 
+                  variant="secondary" 
+                  size="sm" 
+                  className="w-full" 
+                  onClick={() => navigate('/auth')}
+                >
+                  <LogIn size={16} className="mr-2" />
+                  Login
+                </Button>
+              </div>
+            )}
           </div>
         </SidebarFooter>
       </SidebarComponent>

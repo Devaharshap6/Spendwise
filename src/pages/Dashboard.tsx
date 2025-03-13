@@ -7,6 +7,11 @@ import ExpenseTrendsChart from "@/components/charts/ExpenseTrendsChart";
 import CategoryPieChart from "@/components/charts/CategoryPieChart";
 import SummaryCards from "@/components/dashboard/SummaryCards";
 import { CreditCard, CalendarClock, Users } from "@/components/icons/DashboardIcons";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 // Import the data from other sections to keep it synchronized
 import { expensesData } from "@/data/expensesData";
@@ -19,6 +24,18 @@ const Dashboard = () => {
   const [recurringExpenses, setRecurringExpenses] = useState(0);
   const [teamMemberCount, setTeamMemberCount] = useState(0);
   const [monthlyExpenseData, setMonthlyExpenseData] = useState<any[]>([]);
+  const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [newExpense, setNewExpense] = useState({
+    description: "",
+    amount: "",
+    category: "Food",
+    date: new Date().toISOString().split('T')[0],
+  });
+  const { toast } = useToast();
+  const [categories] = useState([
+    "Food", "Rent", "Utilities", "Transportation", "Entertainment", "Other"
+  ]);
 
   useEffect(() => {
     // Calculate total expenses from expense data
@@ -55,6 +72,60 @@ const Dashboard = () => {
     setMonthlyExpenseData(monthlyData);
   }, []);
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setNewExpense({
+      ...newExpense,
+      [name]: value
+    });
+  };
+
+  const handleAddExpense = async () => {
+    setIsLoading(true);
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const user = session?.session?.user;
+      
+      if (user) {
+        // Try to add to Supabase if user is authenticated
+        const { error } = await supabase
+          .from('expenses')
+          .insert({
+            description: newExpense.description,
+            amount: parseFloat(newExpense.amount),
+            category: newExpense.category,
+            date: newExpense.date,
+            user_id: user.id,
+            added_by: user.email
+          });
+        
+        if (error) throw error;
+      }
+      
+      toast({
+        title: "Expense Added",
+        description: `Added ${newExpense.description} for $${newExpense.amount}`,
+      });
+      
+      setIsAddExpenseOpen(false);
+      setNewExpense({
+        description: "",
+        amount: "",
+        category: "Food",
+        date: new Date().toISOString().split('T')[0],
+      });
+    } catch (error) {
+      console.error("Error adding expense:", error);
+      toast({
+        variant: "destructive",
+        title: "Error adding expense",
+        description: "There was an error adding your expense. Please try again.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex justify-between items-center">
@@ -64,10 +135,83 @@ const Dashboard = () => {
             An overview of your finances.
           </p>
         </div>
-        <Button className="bg-primary hover:bg-primary/90">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Expense
-        </Button>
+        <Dialog open={isAddExpenseOpen} onOpenChange={setIsAddExpenseOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-primary hover:bg-primary/90">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Expense
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Add New Expense</DialogTitle>
+              <DialogDescription>
+                Enter the details of your new expense.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="description" className="text-right">
+                  Description
+                </Label>
+                <Input
+                  id="description"
+                  name="description"
+                  value={newExpense.description}
+                  onChange={handleInputChange}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="amount" className="text-right">
+                  Amount ($)
+                </Label>
+                <Input
+                  id="amount"
+                  name="amount"
+                  type="number"
+                  value={newExpense.amount}
+                  onChange={handleInputChange}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="category" className="text-right">
+                  Category
+                </Label>
+                <select
+                  id="category"
+                  name="category"
+                  value={newExpense.category}
+                  onChange={handleInputChange}
+                  className="col-span-3 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {categories.map(category => (
+                    <option key={category} value={category}>{category}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="date" className="text-right">
+                  Date
+                </Label>
+                <Input
+                  id="date"
+                  name="date"
+                  type="date"
+                  value={newExpense.date}
+                  onChange={handleInputChange}
+                  className="col-span-3"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="submit" onClick={handleAddExpense} isLoading={isLoading}>
+                Add Expense
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Summary Cards */}
