@@ -44,11 +44,22 @@ const categories = [
   "Other"
 ];
 
+// Define a type for our expense data that works with both sources
+type Expense = {
+  id: string;
+  description: string;
+  amount: number;
+  category: string;
+  date: string;
+  added_by?: string; // from Supabase
+  addedBy?: string;  // from local data
+};
+
 const Expenses = () => {
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [expenses, setExpenses] = useState(expensesData);
+  const [expenses, setExpenses] = useState<Expense[]>(expensesData);
   const [isFiltering, setIsFiltering] = useState(false);
   const [filterCategory, setFilterCategory] = useState("");
   const { toast } = useToast();
@@ -77,7 +88,18 @@ const Expenses = () => {
         
         if (error) throw error;
         if (data && data.length > 0) {
-          setExpenses(data);
+          // Map Supabase data to our Expense type with normalized properties
+          const normalizedData: Expense[] = data.map(item => ({
+            id: item.id,
+            description: item.description,
+            amount: item.amount,
+            category: item.category || '',
+            date: item.date,
+            added_by: item.added_by, // Keep for Supabase compatibility
+            addedBy: item.added_by   // Add for local data compatibility
+          }));
+          
+          setExpenses(normalizedData);
         }
       }
     } catch (error) {
@@ -147,13 +169,14 @@ const Expenses = () => {
         await fetchExpenses();
       } else {
         // Demo mode - add to local data
-        const newExpenseItem = {
+        const newExpenseItem: Expense = {
           id: crypto.randomUUID(),
           description: newExpense.description,
           amount: parseFloat(newExpense.amount),
           category: newExpense.category,
           date: newExpense.date,
-          added_by: "You (Demo)"
+          added_by: "You (Demo)",
+          addedBy: "You (Demo)"
         };
         
         setExpenses([newExpenseItem, ...expenses]);
@@ -195,7 +218,7 @@ const Expenses = () => {
           formatDate(expense.date),
           `"${expense.description}"`,
           expense.category,
-          expense.added_by || "You",
+          expense.added_by || expense.addedBy || "You",
           expense.amount
         ].join(","))
       ].join("\n");
@@ -288,7 +311,7 @@ const Expenses = () => {
               </div>
             </DialogContent>
           </Dialog>
-          <Button variant="outline" onClick={handleExport} isLoading={isExporting}>
+          <Button variant="outline" onClick={handleExport} disabled={isExporting}>
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
@@ -364,8 +387,8 @@ const Expenses = () => {
                 </div>
               </div>
               <DialogFooter>
-                <Button type="submit" onClick={handleAddExpense} isLoading={isLoading}>
-                  Add Expense
+                <Button type="submit" onClick={handleAddExpense} disabled={isLoading}>
+                  {isLoading ? "Adding..." : "Add Expense"}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -403,7 +426,7 @@ const Expenses = () => {
                       {expense.category}
                     </Badge>
                   </TableCell>
-                  <TableCell>{expense.added_by || "You"}</TableCell>
+                  <TableCell>{expense.added_by || expense.addedBy || "You"}</TableCell>
                   <TableCell className="text-right">
                     ${typeof expense.amount === 'number' ? expense.amount.toFixed(2) : expense.amount}
                   </TableCell>
