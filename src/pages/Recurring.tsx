@@ -34,6 +34,29 @@ import { recurringExpensesData as localRecurringData } from "@/data/recurringExp
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+// Define types for our recurring expenses
+type RecurringExpenseFromSupabase = {
+  id: string;
+  user_id: string | null;
+  description: string;
+  amount: number;
+  category: string | null;
+  frequency: string;
+  next_payment: string;
+  active: boolean | null;
+  created_at: string | null;
+}
+
+type RecurringExpense = {
+  id: string;
+  description: string;
+  amount: number;
+  category: string;
+  frequency: string;
+  nextPayment: string;
+  active: boolean;
+}
+
 // Available categories and frequencies
 const categories = [
   "Food",
@@ -55,7 +78,7 @@ const frequencies = [
 
 const Recurring = () => {
   const [isAddRecurringOpen, setIsAddRecurringOpen] = useState(false);
-  const [recurringExpenses, setRecurringExpenses] = useState(localRecurringData);
+  const [recurringExpenses, setRecurringExpenses] = useState<RecurringExpense[]>(localRecurringData);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const [newRecurring, setNewRecurring] = useState({
@@ -65,6 +88,19 @@ const Recurring = () => {
     frequency: "",
     nextPayment: new Date().toISOString().split('T')[0],
   });
+
+  // Map Supabase data to our frontend format
+  const mapSupabaseToRecurringExpense = (data: RecurringExpenseFromSupabase[]): RecurringExpense[] => {
+    return data.map(expense => ({
+      id: expense.id,
+      description: expense.description,
+      amount: typeof expense.amount === 'string' ? parseFloat(expense.amount) : expense.amount,
+      category: expense.category || 'Other',
+      frequency: expense.frequency,
+      nextPayment: expense.next_payment,
+      active: expense.active === null ? true : expense.active,
+    }));
+  };
 
   // Fetch recurring expenses from Supabase
   useEffect(() => {
@@ -83,11 +119,8 @@ const Recurring = () => {
           if (error) throw error;
           
           if (data && data.length > 0) {
-            // Format amount to numeric if it's stored as string
-            const formattedData = data.map(expense => ({
-              ...expense,
-              amount: typeof expense.amount === 'string' ? parseFloat(expense.amount) : expense.amount
-            }));
+            // Map data to our frontend format
+            const formattedData = mapSupabaseToRecurringExpense(data);
             setRecurringExpenses(formattedData);
           }
         } else {
@@ -168,8 +201,19 @@ const Recurring = () => {
 
       setIsLoading(true);
       
-      // Create the new expense object
-      const newExpense = {
+      // Create the new expense object for our frontend
+      const newExpenseFrontend: RecurringExpense = {
+        id: `temp-${Date.now()}`,
+        description: newRecurring.description,
+        amount: parseFloat(newRecurring.amount),
+        category: newRecurring.category,
+        frequency: newRecurring.frequency,
+        nextPayment: newRecurring.nextPayment,
+        active: true
+      };
+
+      // Create the expense object for Supabase (using snake_case)
+      const newExpenseSupabase = {
         description: newRecurring.description,
         amount: parseFloat(newRecurring.amount),
         category: newRecurring.category,
@@ -185,30 +229,25 @@ const Recurring = () => {
         // Insert into Supabase
         const { data, error } = await supabase
           .from('recurring_expenses')
-          .insert([newExpense])
+          .insert([newExpenseSupabase])
           .select();
         
         if (error) throw error;
         
         if (data && data.length > 0) {
+          // Convert the returned data to our frontend format
+          const mappedData = mapSupabaseToRecurringExpense(data);
           // Add to local state
-          setRecurringExpenses([...recurringExpenses, data[0]]);
+          setRecurringExpenses(prevExpenses => [...prevExpenses, mappedData[0]]);
           toast({
             title: "Success",
             description: "Recurring expense added successfully",
           });
         }
       } else {
-        // For demo purposes without authentication, create a temporary ID
-        const tempId = `temp-${Date.now()}`;
-        const localNewExpense = {
-          ...newExpense,
-          id: tempId,
-          next_payment: newRecurring.nextPayment,
-        };
-        
+        // For demo purposes without authentication
         // Add to local state only
-        setRecurringExpenses([...recurringExpenses, localNewExpense]);
+        setRecurringExpenses(prevExpenses => [...prevExpenses, newExpenseFrontend]);
         toast({
           title: "Success",
           description: "Recurring expense added to local state (not saved to database)",
@@ -415,7 +454,7 @@ const Recurring = () => {
               </TableHeader>
               <TableBody>
                 {recurringExpenses.map((expense) => {
-                  const daysUntil = getDaysUntil(expense.next_payment || expense.nextPayment);
+                  const daysUntil = getDaysUntil(expense.nextPayment);
                   
                   return (
                     <TableRow key={expense.id}>
@@ -428,7 +467,7 @@ const Recurring = () => {
                         </Badge>
                       </TableCell>
                       <TableCell>{expense.frequency}</TableCell>
-                      <TableCell>{formatDate(expense.next_payment || expense.nextPayment)}</TableCell>
+                      <TableCell>{formatDate(expense.nextPayment)}</TableCell>
                       <TableCell>
                         <Badge variant={daysUntil <= 3 ? "destructive" : daysUntil <= 7 ? "secondary" : "outline"}>
                           {daysUntil} {daysUntil === 1 ? 'day' : 'days'}
