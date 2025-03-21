@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { 
   Card, 
   CardContent, 
@@ -29,7 +30,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { recurringExpensesData } from "@/data/recurringExpensesData";
+import { recurringExpensesData as localRecurringData } from "@/data/recurringExpensesData";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 // Available categories and frequencies
 const categories = [
@@ -52,6 +55,9 @@ const frequencies = [
 
 const Recurring = () => {
   const [isAddRecurringOpen, setIsAddRecurringOpen] = useState(false);
+  const [recurringExpenses, setRecurringExpenses] = useState(localRecurringData);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
   const [newRecurring, setNewRecurring] = useState({
     description: "",
     amount: "",
@@ -59,6 +65,49 @@ const Recurring = () => {
     frequency: "",
     nextPayment: new Date().toISOString().split('T')[0],
   });
+
+  // Fetch recurring expenses from Supabase
+  useEffect(() => {
+    const fetchRecurringExpenses = async () => {
+      try {
+        setIsLoading(true);
+        const { data: userData } = await supabase.auth.getUser();
+        
+        if (userData?.user) {
+          // User is authenticated, fetch from Supabase
+          const { data, error } = await supabase
+            .from('recurring_expenses')
+            .select('*')
+            .order('next_payment', { ascending: true });
+          
+          if (error) throw error;
+          
+          if (data && data.length > 0) {
+            // Format amount to numeric if it's stored as string
+            const formattedData = data.map(expense => ({
+              ...expense,
+              amount: typeof expense.amount === 'string' ? parseFloat(expense.amount) : expense.amount
+            }));
+            setRecurringExpenses(formattedData);
+          }
+        } else {
+          // Not authenticated, use local data
+          setRecurringExpenses(localRecurringData);
+        }
+      } catch (error) {
+        console.error("Error fetching recurring expenses:", error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch recurring expenses",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchRecurringExpenses();
+  }, [toast]);
 
   // Map category to appropriate styling
   const getCategoryClass = (category: string) => {
@@ -104,18 +153,123 @@ const Recurring = () => {
     });
   };
 
-  const handleAddRecurring = () => {
-    // In a real app, this would add the recurring expense to the database
-    // and then refetch the data
-    console.log("Adding recurring expense:", newRecurring);
-    setIsAddRecurringOpen(false);
-    setNewRecurring({
-      description: "",
-      amount: "",
-      category: "",
-      frequency: "",
-      nextPayment: new Date().toISOString().split('T')[0],
+  const handleAddRecurring = async () => {
+    try {
+      // Validation
+      if (!newRecurring.description || !newRecurring.amount || !newRecurring.category || 
+          !newRecurring.frequency || !newRecurring.nextPayment) {
+        toast({
+          title: "Validation Error",
+          description: "Please fill all required fields",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setIsLoading(true);
+      
+      // Create the new expense object
+      const newExpense = {
+        description: newRecurring.description,
+        amount: parseFloat(newRecurring.amount),
+        category: newRecurring.category,
+        frequency: newRecurring.frequency,
+        next_payment: newRecurring.nextPayment,
+        active: true
+      };
+
+      // Try to save to Supabase if user is authenticated
+      const { data: userData } = await supabase.auth.getUser();
+      
+      if (userData?.user) {
+        // Insert into Supabase
+        const { data, error } = await supabase
+          .from('recurring_expenses')
+          .insert([newExpense])
+          .select();
+        
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+          // Add to local state
+          setRecurringExpenses([...recurringExpenses, data[0]]);
+          toast({
+            title: "Success",
+            description: "Recurring expense added successfully",
+          });
+        }
+      } else {
+        // For demo purposes without authentication, create a temporary ID
+        const tempId = `temp-${Date.now()}`;
+        const localNewExpense = {
+          ...newExpense,
+          id: tempId,
+          next_payment: newRecurring.nextPayment,
+        };
+        
+        // Add to local state only
+        setRecurringExpenses([...recurringExpenses, localNewExpense]);
+        toast({
+          title: "Success",
+          description: "Recurring expense added to local state (not saved to database)",
+        });
+      }
+
+      // Reset form and close dialog
+      setIsAddRecurringOpen(false);
+      setNewRecurring({
+        description: "",
+        amount: "",
+        category: "",
+        frequency: "",
+        nextPayment: new Date().toISOString().split('T')[0],
+      });
+    } catch (error) {
+      console.error("Error adding recurring expense:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add recurring expense",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Calculate monthly total from recurring expenses
+  const calculateMonthlyTotal = () => {
+    let total = 0;
+    
+    recurringExpenses.forEach(expense => {
+      if (!expense.active) return;
+      
+      const amount = typeof expense.amount === 'string' ? parseFloat(expense.amount) : expense.amount;
+      
+      switch (expense.frequency) {
+        case 'Daily':
+          total += amount * 30; // Approximate days in a month
+          break;
+        case 'Weekly':
+          total += amount * 4.33; // Average weeks in a month
+          break;
+        case 'Bi-weekly':
+          total += amount * 2.17; // Bi-weekly in a month
+          break;
+        case 'Monthly':
+          total += amount;
+          break;
+        case 'Quarterly':
+          total += amount / 3; // Divided over 3 months
+          break;
+        case 'Yearly':
+          total += amount / 12; // Divided over 12 months
+          break;
+        default:
+          total += amount;
+      }
     });
+    
+    return total.toFixed(2);
   };
 
   return (
@@ -216,8 +370,12 @@ const Recurring = () => {
               </div>
             </div>
             <DialogFooter>
-              <Button type="submit" onClick={handleAddRecurring}>
-                Add Recurring Expense
+              <Button 
+                type="submit" 
+                onClick={handleAddRecurring}
+                disabled={isLoading}
+              >
+                {isLoading ? "Adding..." : "Add Recurring Expense"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -232,46 +390,59 @@ const Recurring = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Description</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Frequency</TableHead>
-                <TableHead>Next Payment</TableHead>
-                <TableHead>Days Until</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {recurringExpensesData.map((expense) => {
-                const daysUntil = getDaysUntil(expense.nextPayment);
-                
-                return (
-                  <TableRow key={expense.id}>
-                    <TableCell className="font-medium">
-                      {expense.description}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={cn("category-pill", getCategoryClass(expense.category))}>
-                        {expense.category}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{expense.frequency}</TableCell>
-                    <TableCell>{formatDate(expense.nextPayment)}</TableCell>
-                    <TableCell>
-                      <Badge variant={daysUntil <= 3 ? "destructive" : daysUntil <= 7 ? "secondary" : "outline"}>
-                        {daysUntil} {daysUntil === 1 ? 'day' : 'days'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      ${expense.amount.toFixed(2)}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+          {isLoading ? (
+            <div className="flex items-center justify-center p-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : recurringExpenses.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">No recurring expenses found.</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                Click "Add Recurring" to create your first recurring expense.
+              </p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Frequency</TableHead>
+                  <TableHead>Next Payment</TableHead>
+                  <TableHead>Days Until</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {recurringExpenses.map((expense) => {
+                  const daysUntil = getDaysUntil(expense.next_payment || expense.nextPayment);
+                  
+                  return (
+                    <TableRow key={expense.id}>
+                      <TableCell className="font-medium">
+                        {expense.description}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={cn("category-pill", getCategoryClass(expense.category))}>
+                          {expense.category}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{expense.frequency}</TableCell>
+                      <TableCell>{formatDate(expense.next_payment || expense.nextPayment)}</TableCell>
+                      <TableCell>
+                        <Badge variant={daysUntil <= 3 ? "destructive" : daysUntil <= 7 ? "secondary" : "outline"}>
+                          {daysUntil} {daysUntil === 1 ? 'day' : 'days'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        ${parseFloat(String(expense.amount)).toFixed(2)}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 
@@ -285,7 +456,7 @@ const Recurring = () => {
         <CardContent>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-2xl font-bold">$1,530.98</p>
+              <p className="text-2xl font-bold">${calculateMonthlyTotal()}</p>
               <p className="text-sm text-muted-foreground">Total monthly recurring expenses</p>
             </div>
             <Button variant="outline" className="gap-2">
