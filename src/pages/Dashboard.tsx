@@ -104,7 +104,7 @@ const Dashboard = () => {
       
       toast({
         title: "Expense Added",
-        description: `Added ${newExpense.description} for $${newExpense.amount}`,
+        description: `Added ${newExpense.description} for ₹${newExpense.amount}`,
       });
       
       setIsAddExpenseOpen(false);
@@ -164,7 +164,7 @@ const Dashboard = () => {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="amount" className="text-right">
-                  Amount ($)
+                  Amount (₹)
                 </Label>
                 <Input
                   id="amount"

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { 
   Card, 
@@ -349,7 +348,7 @@ const Recurring = () => {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="amount" className="text-right">
-                  Amount ($)
+                  Amount (₹)
                 </Label>
                 <Input
                   id="amount"
@@ -474,7 +473,7 @@ const Recurring = () => {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        ${parseFloat(String(expense.amount)).toFixed(2)}
+                        ₹{parseFloat(String(expense.amount)).toFixed(2)}
                       </TableCell>
                     </TableRow>
                   );
@@ -495,7 +494,7 @@ const Recurring = () => {
         <CardContent>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-2xl font-bold">${calculateMonthlyTotal()}</p>
+              <p className="text-2xl font-bold">₹{calculateMonthlyTotal()}</p>
               <p className="text-sm text-muted-foreground">Total monthly recurring expenses</p>
             </div>
             <Button variant="outline" className="gap-2">

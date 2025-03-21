@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { 
   Card, 
@@ -184,7 +183,7 @@ const Expenses = () => {
       
       toast({
         title: "Expense Added",
-        description: `Added ${newExpense.description} for $${newExpense.amount}`,
+        description: `Added ${newExpense.description} for ₹${newExpense.amount}`,
       });
       
       setIsAddExpenseOpen(false);
@@ -344,7 +343,7 @@ const Expenses = () => {
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="amount" className="text-right">
-                    Amount ($)
+                    Amount (₹)
                   </Label>
                   <Input
                     id="amount"
@@ -428,7 +427,7 @@ const Expenses = () => {
                   </TableCell>
                   <TableCell>{expense.added_by || expense.addedBy || "You"}</TableCell>
                   <TableCell className="text-right">
-                    ${typeof expense.amount === 'number' ? expense.amount.toFixed(2) : expense.amount}
+                    ₹{typeof expense.amount === 'number' ? expense.amount.toFixed(2) : expense.amount}
                   </TableCell>
                 </TableRow>
               ))}

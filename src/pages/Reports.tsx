@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
@@ -294,7 +293,6 @@ const InsightCard = ({
 };
 
 // Import this to make the component compile
-// At compile time these will be replaced with the actual imports
 import { PieChart, Pie, Cell } from "recharts";
 
 export default Reports;
