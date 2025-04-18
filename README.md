@@ -1,69 +1,85 @@
-# Welcome to your Lovable project
+# 💸 SpendWise - Smart Expense Tracker
 
-## Project info
+SpendWise is a powerful and modern full-stack expense tracking application built with React, TypeScript, and Tailwind CSS. Designed to simplify personal finance management, it provides advanced data visualization, real-time tracking, and collaborative features to help users stay on top of their budgets.
 
-**URL**: https://lovable.dev/projects/5e934b19-2229-4d24-8966-eaa8d845a64a
+---
 
-## How can I edit this code?
+## 🚀 Features
 
-There are several ways of editing your application.
+### 🛡️ Authentication
+- User registration and login
+- Secure authentication with session persistence
+- Profile management
+- Protected routes
 
-**Use Lovable**
+### 📊 Dashboard
+- **Overview Cards**: Total Expenses, Income, Remaining Budget, and Upcoming Payments
+- **Expense Analysis**: Toggle between Pie Chart and Bar Chart (category-wise)
+- **Recent Expenses**: Latest 5 transactions with badges and tooltips
+- **Quick Add**: Popup dialog to quickly log an expense
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/5e934b19-2229-4d24-8966-eaa8d845a64a) and start prompting.
+### 📋 Expenses Page
+- Full chronological list of expenses
+- Advanced filters and sorting
+- Edit/Delete with confirmation
+- Category-based color-coded tags
 
-Changes made via Lovable will be committed automatically to this repo.
+### 🔁 Recurring Expenses
+- Add subscriptions or regular bills
+- Set frequency (monthly, weekly, etc.)
+- Auto-generate recurring entries
+- Edit/delete with ease
 
-**Use your preferred IDE**
+### 📈 Reports
+- **Expense Trends**: Monthly trends with toggle between "Expenses" & "Expenses vs. Income"
+- **Breakdown Charts**: Interactive Pie/Bar charts
+- **Custom Date Range**: Calendar-based selection
+- Export reports and apply filters
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### 🤝 Shared Expenses
+- Share expenses with other users
+- Split bills and track shared responsibility
+- Invite others to join shared lists
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### 🖥️ UI/UX Design
+- Responsive layout (mobile/tablet/desktop)
+- Glassmorphic card design
+- Sidebar navigation with collapsible drawer
+- Motion transitions with Framer Motion
+- High-contrast and accessible design
 
-Follow these steps:
+### 📊 Data Visualization
+- Pie, Bar, and Line charts for category and trend insights
+- Tooltips and animations for better understanding
+- Color-coded categories and status indicators
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### 🔔 Notifications
+- Toasts for actions (success, error, updates)
+- Realtime feedback for user actions
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+---
 
-# Step 3: Install the necessary dependencies.
-npm i
+## 🛠️ Tech Stack
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+- **Frontend**: React, TypeScript, Tailwind CSS, React Router, React Hook Form, Framer Motion
+- **Data Fetching**: React Query
+- **Charts**: Recharts
+- **State Management**: Context API / Redux (optional)
+- **Authentication**: JWT or Firebase Auth (based on your setup)
+- **Backend**: Node.js + Express (or Firebase / Supabase)
+- **Database**: MongoDB / PostgreSQL
+
+---
+
+## 📦 Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/your-username/spendwise-expense-tracker.git
+cd spendwise-expense-tracker
+
+# Install dependencies
+npm install
+
+# Run the development server
 npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with .
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/5e934b19-2229-4d24-8966-eaa8d845a64a) and click on Share -> Publish.
-
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
